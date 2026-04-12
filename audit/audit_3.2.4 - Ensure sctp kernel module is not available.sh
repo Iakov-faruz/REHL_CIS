@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# CIS 3.2.4 - Ensure sctp kernel module is not available (Audit)
+MODULE="sctp"
+echo "=== Auditing $MODULE ==="
+LOADED=$(lsmod | grep "^$MODULE ")
+if [ -n "$LOADED" ]; then
+    echo " - FAIL: $MODULE is currently loaded"
+else
+    echo " - PASS: $MODULE is not loaded"
+fi
+
+MODPROBE=$(modprobe -n -v "$MODULE" 2>/dev/null)
+if echo "$MODPROBE" | grep -q "install /bin/true" || echo "$MODPROBE" | grep -q "install /bin/false"; then
+    echo " - PASS: $MODULE is not loadable"
+else
+    if echo "$MODPROBE" | grep -q "FATAL: Module $MODULE not found"; then
+        echo " - PASS: $MODULE not found (not loadable)"
+    else
+        echo " - FAIL: $MODULE is loadable. Output: $MODPROBE"
+    fi
+fi
