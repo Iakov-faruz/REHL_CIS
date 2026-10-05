@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# IF: a separate partition exists for /home, verify that the nodev option is set.
-FAILED=0
+# CIS Benchmark Audit: 1.1.2.3.2 Ensure nodev option set on /home partition
+# Exact match to the official CIS audit command
 
 echo "CHECK - nodev set on /home:"
-RESULT=$(findmnt -kn /home | grep -v nodev)
-if [ -z "$RESULT" ]; then
-    echo "CHECK - nodev set on /home: PASS"
-else
-    echo "CHECK - nodev set on /home: FAIL"
-    FAILED=1
+
+# 1. אם /home אינו partition נפרד → Not Applicable (PASS)
+if ! findmnt -kn /home >/dev/null 2>&1; then
+    echo "CHECK - /home is not a separate partition: PASS (Not Applicable)"
+    echo "OVERALL - 1.1.2.3.2 Ensure nodev option set on /home partition: PASS"
+    exit 0
 fi
 
-if [ "${FAILED:-0}" -eq 0 ]; then
-    echo "OVERALL - 1.1.2.3.2 Ensure nodev option set on /home partition: PASS"
-else
+# 2. Audit בדיוק כמו ש-CIS מבקש
+if findmnt -kn /home | grep -v nodev | grep -q .; then
+    echo "CHECK - nodev set on /home: FAIL"
     echo "OVERALL - 1.1.2.3.2 Ensure nodev option set on /home partition: FAIL"
+    exit 1
+else
+    echo "CHECK - nodev set on /home: PASS"
+    echo "OVERALL - 1.1.2.3.2 Ensure nodev option set on /home partition: PASS"
+    exit 0
 fi
